@@ -210,10 +210,10 @@ public class NumberEntryWidget extends GuiComponent implements ICompositeWidget 
         screen.setInitialFocus(this.textField);
         addWidget.accept(this.textField);
 
-        buttons.add(new Button(left, top + 42, 22, 20, makeLabel(DIVID, STEPS[0]), btn -> dividQty(-STEPS[0])));
-        buttons.add(new Button(left + 28, top + 42, 28, 20, makeLabel(DIVID, STEPS[1]), btn -> dividQty(-STEPS[1])));
-        buttons.add(new Button(left + 62, top + 42, 32, 20, makeLabel(DIVID, STEPS[2]), btn -> dividQty(-STEPS[2])));
-        buttons.add(new Button(left + 100, top + 42, 38, 20, makeLabel(DIVID, STEPS[3]), btn -> dividQty(-STEPS[3])));
+        buttons.add(new Button(left, top + 42, 22, 20, makeLabel(MINUS, STEPS[0]), btn -> addQty(-STEPS[0])));
+        buttons.add(new Button(left + 28, top + 42, 28, 20, makeLabel(DIVID, STEPS[1]), btn -> dividQty(STEPS[1])));
+        buttons.add(new Button(left + 62, top + 42, 32, 20, makeLabel(DIVID, STEPS[2]), btn -> dividQty(STEPS[2])));
+        buttons.add(new Button(left + 100, top + 42, 38, 20, makeLabel(DIVID, STEPS[3]), btn -> dividQty(STEPS[3])));
 
         // This element is not focusable
         if (!hideValidationIcon) {
