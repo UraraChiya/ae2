@@ -292,6 +292,7 @@ public class NumberEntryWidget extends GuiComponent implements ICompositeWidget 
 
     private void multiQty(long delta) {
         var currentValue = getValueInternal().orElse(BigDecimal.ZERO);
+        System.out.println(delta);
         var newValue = currentValue.multiply(BigDecimal.valueOf(delta));
         var minimum = convertToInternalValue(this.minValue).setScale(0, RoundingMode.CEILING);
         var maximum = convertToInternalValue(this.maxValue).setScale(0, RoundingMode.FLOOR);
