@@ -281,10 +281,14 @@ public class NumberEntryWidget extends GuiComponent implements ICompositeWidget 
     }
 
     private void addQty(long delta) {
+        System.out.println("add");
         var currentValue = getValueInternal().orElse(BigDecimal.ZERO);
+        System.out.println("currentValue: " + currentValue);
         var newValue = currentValue.add(BigDecimal.valueOf(delta));
         var minimum = convertToInternalValue(this.minValue).setScale(0, RoundingMode.CEILING);
         var maximum = convertToInternalValue(this.maxValue).setScale(0, RoundingMode.FLOOR);
+        System.out.println("minimum: " + minimum);
+        System.out.println("maximum: " + maximum);
         if (newValue.compareTo(minimum) < 0) {
             newValue = minimum;
         } else if (newValue.compareTo(maximum) > 0) {
@@ -292,14 +296,20 @@ public class NumberEntryWidget extends GuiComponent implements ICompositeWidget 
         } else if (currentValue.compareTo(BigDecimal.ONE) == 0 && delta > 0 && delta % 10 == 0) {
             newValue = newValue.subtract(BigDecimal.ONE);
         }
+        System.out.println("newValue: " + currentValue);
         setValueInternal(newValue);
     }
 
     private void multiQty(long delta) {
+        System.out.println("multi");
         var currentValue = getValueInternal().orElse(BigDecimal.ZERO);
+        System.out.println("currentValue: " + currentValue);
         var newValue = currentValue.multiply(BigDecimal.valueOf(delta));
+        System.out.println("newValue: " + currentValue);
         var minimum = convertToInternalValue(this.minValue).setScale(0, RoundingMode.CEILING);
         var maximum = convertToInternalValue(this.maxValue).setScale(0, RoundingMode.FLOOR);
+        System.out.println("minimum: " + minimum);
+        System.out.println("maximum: " + maximum);
         if (newValue.compareTo(minimum) < 0) {
             newValue = minimum;
         } else if (newValue.compareTo(maximum) > 0) {
@@ -309,12 +319,14 @@ public class NumberEntryWidget extends GuiComponent implements ICompositeWidget 
         // 10 == 0) {
         // newValue = newValue.subtract(BigDecimal.ONE);
         // }
+        System.out.println("newValue: " + currentValue);
         setValueInternal(newValue);
     }
 
     private void dividQty(long delta) {
+        System.out.println("divid");
         var currentValue = getValueInternal().orElse(BigDecimal.ZERO);
-        System.out.println("\ncurrentValue: " + currentValue);
+        System.out.println("currentValue: " + currentValue);
         var newValue = currentValue.divide(BigDecimal.valueOf(delta), 3, RoundingMode.CEILING);
         System.out.println("newValue: " + currentValue);
         var minimum = convertToInternalValue(this.minValue).setScale(0, RoundingMode.CEILING);
