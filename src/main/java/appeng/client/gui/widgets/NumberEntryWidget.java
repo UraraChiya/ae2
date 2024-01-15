@@ -195,10 +195,10 @@ public class NumberEntryWidget extends GuiComponent implements ICompositeWidget 
 
         List<Button> buttons = new ArrayList<>(9);
 
-        buttons.add(new Button(left, top, 22, 20, makeLabel(MULTI, STEPS[0]), btn -> multiQty(STEPS[0])));
-        buttons.add(new Button(left + 28, top, 28, 20, makeLabel(MULTI, STEPS[1]), btn -> multiQty(STEPS[1])));
-        buttons.add(new Button(left + 62, top, 32, 20, makeLabel(MULTI, STEPS[2]), btn -> multiQty(STEPS[2])));
-        buttons.add(new Button(left + 100, top, 38, 20, makeLabel(MULTI, STEPS[3]), btn -> multiQty(STEPS[3])));
+        buttons.add(new Button(left, top, 22, 10, makeLabel(MULTI, STEPS[0]), btn -> multiQty(STEPS[0])));
+        buttons.add(new Button(left + 28, top, 28, 10, makeLabel(MULTI, STEPS[1]), btn -> multiQty(STEPS[1])));
+        buttons.add(new Button(left + 62, top, 32, 10, makeLabel(MULTI, STEPS[2]), btn -> multiQty(STEPS[2])));
+        buttons.add(new Button(left + 100, top, 38, 10, makeLabel(MULTI, STEPS[3]), btn -> multiQty(STEPS[3])));
 
         // Need to add these now for sensible tab-order
         buttons.forEach(addWidget);
@@ -210,10 +210,10 @@ public class NumberEntryWidget extends GuiComponent implements ICompositeWidget 
         screen.setInitialFocus(this.textField);
         addWidget.accept(this.textField);
 
-        buttons.add(new Button(left, top + 42, 22, 20, makeLabel(MINUS, STEPS[0]), btn -> addQty(-STEPS[0])));
-        buttons.add(new Button(left + 28, top + 42, 28, 20, makeLabel(DIVID, STEPS[1]), btn -> dividQty(STEPS[1])));
-        buttons.add(new Button(left + 62, top + 42, 32, 20, makeLabel(DIVID, STEPS[2]), btn -> dividQty(STEPS[2])));
-        buttons.add(new Button(left + 100, top + 42, 38, 20, makeLabel(DIVID, STEPS[3]), btn -> dividQty(STEPS[3])));
+        buttons.add(new Button(left, top + 42, 22, 20, makeLabel(DIVID, STEPS[0]), btn -> dividQty(STEPS[0])));
+        buttons.add(new Button(left + 28, top + 42, 26, 20, makeLabel(DIVID, STEPS[1]), btn -> dividQty(STEPS[1])));
+        buttons.add(new Button(left + 62, top + 42, 30, 20, makeLabel(DIVID, STEPS[2]), btn -> dividQty(STEPS[2])));
+        buttons.add(new Button(left + 100, top + 42, 36, 20, makeLabel(DIVID, STEPS[3]), btn -> dividQty(STEPS[3])));
 
         // This element is not focusable
         if (!hideValidationIcon) {
