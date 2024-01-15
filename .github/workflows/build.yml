@@ -17,6 +17,8 @@ jobs:
           cache: 'gradle'
       - name: Validate no assets
         run: test ! -d ./src/generated
+      - name: Grant Gradlew Permissions
+        run: chmod +x gradlew
       - name: Generate assets
         run: ./gradlew runData
       - name: Validate assets
