@@ -61,9 +61,11 @@ import appeng.core.localization.GuiText;
  */
 public class NumberEntryWidget extends GuiComponent implements ICompositeWidget {
 
-    private static final long[] STEPS = new long[] { 1, 10, 100, 1000 };
+    private static final long[] STEPS = new long[] { 2, 3, 5, 8 };
     private static final Component PLUS = Component.literal("+");
     private static final Component MINUS = Component.literal("-");
+    private static final Component MULTI = Component.literal("*");
+    private static final Component DIVID = Component.literal("/");
     private final int errorTextColor;
     private final int normalTextColor;
 
@@ -190,10 +192,10 @@ public class NumberEntryWidget extends GuiComponent implements ICompositeWidget 
 
         List<Button> buttons = new ArrayList<>(9);
 
-        buttons.add(new Button(left, top, 22, 20, makeLabel(PLUS, STEPS[0]), btn -> addQty(STEPS[0])));
-        buttons.add(new Button(left + 28, top, 28, 20, makeLabel(PLUS, STEPS[1]), btn -> addQty(STEPS[1])));
-        buttons.add(new Button(left + 62, top, 32, 20, makeLabel(PLUS, STEPS[2]), btn -> addQty(STEPS[2])));
-        buttons.add(new Button(left + 100, top, 38, 20, makeLabel(PLUS, STEPS[3]), btn -> addQty(STEPS[3])));
+        buttons.add(new Button(left, top, 22, 20, makeLabel(MULTI, STEPS[0]), btn -> multiQty(STEPS[0])));
+        buttons.add(new Button(left + 28, top, 28, 20, makeLabel(MULTI, STEPS[1]), btn -> multiQty(STEPS[1])));
+        buttons.add(new Button(left + 62, top, 32, 20, makeLabel(MULTI, STEPS[2]), btn -> multiQty(STEPS[2])));
+        buttons.add(new Button(left + 100, top, 38, 20, makeLabel(MULTI, STEPS[3]), btn -> multiQty(STEPS[3])));
 
         // Need to add these now for sensible tab-order
         buttons.forEach(addWidget);
@@ -205,10 +207,10 @@ public class NumberEntryWidget extends GuiComponent implements ICompositeWidget 
         screen.setInitialFocus(this.textField);
         addWidget.accept(this.textField);
 
-        buttons.add(new Button(left, top + 42, 22, 20, makeLabel(MINUS, STEPS[0]), btn -> addQty(-STEPS[0])));
-        buttons.add(new Button(left + 28, top + 42, 28, 20, makeLabel(MINUS, STEPS[1]), btn -> addQty(-STEPS[1])));
-        buttons.add(new Button(left + 62, top + 42, 32, 20, makeLabel(MINUS, STEPS[2]), btn -> addQty(-STEPS[2])));
-        buttons.add(new Button(left + 100, top + 42, 38, 20, makeLabel(MINUS, STEPS[3]), btn -> addQty(-STEPS[3])));
+        buttons.add(new Button(left, top + 42, 22, 20, makeLabel(DIVID, STEPS[0]), btn -> dividQty(-STEPS[0])));
+        buttons.add(new Button(left + 28, top + 42, 28, 20, makeLabel(DIVID, STEPS[1]), btn -> dividQty(-STEPS[1])));
+        buttons.add(new Button(left + 62, top + 42, 32, 20, makeLabel(DIVID, STEPS[2]), btn -> dividQty(-STEPS[2])));
+        buttons.add(new Button(left + 100, top + 42, 38, 20, makeLabel(DIVID, STEPS[3]), btn -> dividQty(-STEPS[3])));
 
         // This element is not focusable
         if (!hideValidationIcon) {
@@ -276,6 +278,36 @@ public class NumberEntryWidget extends GuiComponent implements ICompositeWidget 
     private void addQty(long delta) {
         var currentValue = getValueInternal().orElse(BigDecimal.ZERO);
         var newValue = currentValue.add(BigDecimal.valueOf(delta));
+        var minimum = convertToInternalValue(this.minValue).setScale(0, RoundingMode.CEILING);
+        var maximum = convertToInternalValue(this.maxValue).setScale(0, RoundingMode.FLOOR);
+        if (newValue.compareTo(minimum) < 0) {
+            newValue = minimum;
+        } else if (newValue.compareTo(maximum) > 0) {
+            newValue = maximum;
+        } else if (currentValue.compareTo(BigDecimal.ONE) == 0 && delta > 0 && delta % 10 == 0) {
+            newValue = newValue.subtract(BigDecimal.ONE);
+        }
+        setValueInternal(newValue);
+    }
+
+    private void multiQty(long delta) {
+        var currentValue = getValueInternal().orElse(BigDecimal.ZERO);
+        var newValue = currentValue.multiply(BigDecimal.valueOf(delta));
+        var minimum = convertToInternalValue(this.minValue).setScale(0, RoundingMode.CEILING);
+        var maximum = convertToInternalValue(this.maxValue).setScale(0, RoundingMode.FLOOR);
+        if (newValue.compareTo(minimum) < 0) {
+            newValue = minimum;
+        } else if (newValue.compareTo(maximum) > 0) {
+            newValue = maximum;
+        } else if (currentValue.compareTo(BigDecimal.ONE) == 0 && delta > 0 && delta % 10 == 0) {
+            newValue = newValue.subtract(BigDecimal.ONE);
+        }
+        setValueInternal(newValue);
+    }
+
+    private void dividQty(long delta) {
+        var currentValue = getValueInternal().orElse(BigDecimal.ZERO);
+        var newValue = currentValue.divide(BigDecimal.valueOf(delta));
         var minimum = convertToInternalValue(this.minValue).setScale(0, RoundingMode.CEILING);
         var maximum = convertToInternalValue(this.maxValue).setScale(0, RoundingMode.FLOOR);
         if (newValue.compareTo(minimum) < 0) {
