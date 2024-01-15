@@ -195,10 +195,10 @@ public class NumberEntryWidget extends GuiComponent implements ICompositeWidget 
 
         List<Button> buttons = new ArrayList<>(9);
 
-        buttons.add(new Button(left, top, 22, 10, makeLabel(MULTI, STEPS[0]), btn -> multiQty(STEPS[0])));
-        buttons.add(new Button(left + 28, top, 28, 10, makeLabel(MULTI, STEPS[1]), btn -> multiQty(STEPS[1])));
-        buttons.add(new Button(left + 62, top, 32, 10, makeLabel(MULTI, STEPS[2]), btn -> multiQty(STEPS[2])));
-        buttons.add(new Button(left + 100, top, 38, 10, makeLabel(MULTI, STEPS[3]), btn -> multiQty(STEPS[3])));
+        buttons.add(new Button(left, top, 30, 20, makeLabel(MULTI, 2), btn -> multiQty(2)));
+        buttons.add(new Button(left + 36, top, 30, 20, makeLabel(MULTI, 3), btn -> multiQty(3)));
+        buttons.add(new Button(left + 72, top, 30, 20, makeLabel(MULTI, 5), btn -> multiQty(5)));
+        buttons.add(new Button(left + 108, top, 30, 20, makeLabel(MULTI, 8), btn -> multiQty(8)));
 
         // Need to add these now for sensible tab-order
         buttons.forEach(addWidget);
@@ -210,10 +210,10 @@ public class NumberEntryWidget extends GuiComponent implements ICompositeWidget 
         screen.setInitialFocus(this.textField);
         addWidget.accept(this.textField);
 
-        buttons.add(new Button(left, top + 42, 22, 20, makeLabel(DIVID, STEPS[0]), btn -> dividQty(STEPS[0])));
-        buttons.add(new Button(left + 28, top + 42, 26, 20, makeLabel(DIVID, STEPS[1]), btn -> dividQty(STEPS[1])));
-        buttons.add(new Button(left + 62, top + 42, 30, 20, makeLabel(DIVID, STEPS[2]), btn -> dividQty(STEPS[2])));
-        buttons.add(new Button(left + 100, top + 42, 36, 20, makeLabel(DIVID, STEPS[3]), btn -> dividQty(STEPS[3])));
+        buttons.add(new Button(left, top + 42, 30, 20, makeLabel(MULTI, 10), btn -> multiQty(10)));
+        buttons.add(new Button(left + 36, top + 42, 30, 20, makeLabel(MULTI, 16), btn -> multiQty(16)));
+        buttons.add(new Button(left + 72, top + 42, 30, 20, makeLabel(MULTI, 32), btn -> multiQty(32)));
+        buttons.add(new Button(left + 108, top + 42, 30, 20, makeLabel(MULTI, 64), btn -> multiQty(64)));
 
         // This element is not focusable
         if (!hideValidationIcon) {
