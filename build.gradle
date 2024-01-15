@@ -1,0 +1,622 @@
+/*
+ * This file is part of Applied Energistics 2.
+ * Copyright (c) 2013 - 2015, AlgorithmX2, All rights reserved.
+ *
+ * Applied Energistics 2 is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Applied Energistics 2 is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with Applied Energistics 2.  If not, see <http://www.gnu.org/licenses/lgpl>.
+ */
+
+buildscript {
+    repositories {
+        maven { url = 'https://maven.minecraftforge.net' }
+        maven { url = 'https://repo.spongepowered.org/maven' }
+        mavenCentral()
+    }
+    dependencies {
+        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.1.+', changing: true
+        classpath 'org.spongepowered:mixingradle:0.7-SNAPSHOT'
+    }
+}
+
+plugins {
+    id "maven-publish"
+    id "com.diffplug.spotless" version "5.12.4"
+    id "com.matthewprenger.cursegradle" version "1.4.0"
+    id "com.modrinth.minotaur" version "2.+"
+    id "com.github.johnrengelman.shadow" version "7.0.0"
+    id "idea"
+}
+
+apply plugin: 'net.minecraftforge.gradle'
+apply plugin: 'org.spongepowered.mixin'
+apply plugin: "eclipse"
+
+// All jar files from this folder will be added automatically as runtime mod dependencies
+def extraModsDir = "extra-mods-${minecraft_version}"
+
+repositories {
+    flatDir {
+        name "extra-mods"
+        dir file(extraModsDir)
+    }
+    mavenLocal()
+    mavenCentral()
+    maven {
+        url "https://maven.shedaniel.me/"
+        content {
+            includeGroup "me.shedaniel"
+            includeGroup "me.shedaniel.cloth"
+            includeGroup "dev.architectury"
+        }
+    }
+    maven {
+        url "https://maven.bai.lol"
+        content {
+            includeGroup "mcp.mobius.waila"
+            includeGroup "lol.bai"
+        }
+    }
+    maven { // modmaven, maven proxy
+        name 'modmaven'
+        url "https://modmaven.dev/"
+    }
+    maven { // for TOP
+        url "https://maven.k-4u.nl/"
+        content {
+            includeGroup "mcjty"
+        }
+    }
+    maven {
+        url "https://www.cursemaven.com"
+        content {
+            includeGroup "curse.maven"
+        }
+    }
+    maven { url = 'https://repo.spongepowered.org/maven' }
+    maven {
+        url "https://maven.parchmentmc.net/"
+        content {
+            includeGroup "org.parchmentmc.data"
+        }
+    }
+}
+
+configurations {
+    shaded {
+        transitive = false
+    }
+}
+
+dependencies {
+    // To be copied into the jar file
+    shaded project(path: ':libs:markdown', configuration: "archives")
+    shaded "io.methvin:directory-watcher:${directory_watcher_version}"
+    shaded "org.yaml:snakeyaml:${snakeyaml_version}"
+
+    minecraftLibrary project(':libs:markdown')
+    // Do not inherit any transitive dependencies here since we rely on those dependencies being
+    // present in Minecrafts own dependencies already.
+    minecraftLibrary("io.methvin:directory-watcher:${directory_watcher_version}") {
+        transitive = false
+    }
+    minecraftLibrary("org.yaml:snakeyaml:${snakeyaml_version}")  {
+        transitive = false
+    }
+
+    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+
+    // compile against provided APIs
+    compileOnly fg.deobf("mezz.jei:jei-${jei_minecraft_version}-common-api:${jei_version}")
+    compileOnly fg.deobf("mezz.jei:jei-${jei_minecraft_version}-forge-api:${jei_version}")
+
+    // Always depend on the REI API to compile
+    if (project.runtime_itemlist_mod == "jei") {
+        runtimeOnly fg.deobf("mezz.jei:jei-${jei_minecraft_version}-forge:${jei_version}")
+
+        compileOnly "me.shedaniel.cloth:basic-math:0.6.1"
+        compileOnly fg.deobf("dev.architectury:architectury-forge:6.2.46")
+        compileOnly fg.deobf("me.shedaniel:RoughlyEnoughItems-forge:${project.rei_version}")
+    } else if (project.runtime_itemlist_mod == "rei") {
+        implementation "me.shedaniel.cloth:basic-math:0.6.1"
+        implementation fg.deobf("me.shedaniel.cloth:cloth-config-forge:8.2.88")
+        implementation fg.deobf("dev.architectury:architectury-forge:6.2.46")
+        implementation fg.deobf("me.shedaniel:RoughlyEnoughItems-forge:${project.rei_version}")
+    } else {
+        throw new GradleException("Invalid runtime_itemlist_mod value: " + project.runtime_itemlist_mod)
+    }
+
+    // Locally sourced extra mods for runtime (i.e. testing)
+    for (extraModJar in fileTree(dir: extraModsDir, include: '*.jar')) {
+        def basename = extraModJar.name.substring(0, extraModJar.name.length() - ".jar".length())
+        def versionSep = basename.lastIndexOf('-')
+        assert versionSep != -1
+        def artifactId = basename.substring(0, versionSep)
+        def version = basename.substring(versionSep + 1)
+        runtimeOnly fg.deobf("extra-mods:$artifactId:$version")
+    }
+
+    compileOnly fg.deobf("mcp.mobius.waila:wthit-api:forge-${project.wthit_version}")
+
+    if (project.runtime_tooltip_mod == "wthit") {
+        runtimeOnly fg.deobf("mcp.mobius.waila:wthit:forge-${project.wthit_version}")
+        runtimeOnly fg.deobf("lol.bai:badpackets:forge-0.1.2")
+    }
+
+    if (project.runtime_tooltip_mod == "jade") {
+        implementation fg.deobf("curse.maven:jade-324717:${project.jade_file_id}")
+    } else {
+        compileOnly fg.deobf("curse.maven:jade-324717:${project.jade_file_id}")
+    }
+
+    def topDependency = "curse.maven:the-one-probe-245211:3871444"
+    if (project.runtime_tooltip_mod == "top") {
+        implementation fg.deobf(topDependency)
+    } else {
+        compileOnly topDependency
+    }
+
+    // unit test dependencies
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.1")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:5.8.1")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.8.1")
+    testImplementation("org.junit.platform:junit-platform-launcher:1.8.1")
+    testImplementation("org.assertj:assertj-core:3.19.0")
+    testImplementation("com.google.guava:guava-testlib:21.0")
+    testImplementation("org.mockito:mockito-junit-jupiter:4.0.0")
+    testImplementation("org.mockito:mockito-inline:4.0.0")
+
+    // Annotation Processors
+    annotationProcessor 'org.spongepowered:mixin:0.8.4:processor'
+}
+archivesBaseName = artifact_basename
+
+allprojects {
+    group = artifact_group
+
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(17)
+        }
+    }
+
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        maven {
+            url "https://maven.shedaniel.me/"
+            content {
+                includeGroup "me.shedaniel"
+                includeGroup "me.shedaniel.cloth"
+                includeGroup "dev.architectury"
+            }
+        }
+        maven {
+            url "https://maven.bai.lol"
+            content {
+                includeGroup "mcp.mobius.waila"
+                includeGroup "lol.bai"
+            }
+        }
+        maven {
+            url "https://maven.parchmentmc.net/"
+            content {
+                includeGroup "org.parchmentmc.data"
+            }
+        }
+        // For the "No Indium?" mod
+        maven {
+            url = 'https://maven.cafeteria.dev/releases/'
+            content {
+                includeGroup "me.luligabi"
+            }
+        }
+
+        maven {
+            name 'modmaven'
+            url "https://modmaven.dev/"
+            content {
+                includeGroup "mezz.jei"
+            }
+        }
+
+        maven {
+            name 'cursemaven'
+            url "https://www.cursemaven.com"
+            content {
+                includeGroup "curse.maven"
+            }
+        }
+
+        maven {
+            url "https://maven.blamejared.com"
+            content {
+                includeGroup "vazkii.patchouli"
+            }
+        }
+    }
+
+    // ensure everything uses UTF-8 and not some random codepage chosen by gradle
+    compileJava.options.encoding = 'UTF-8'
+    tasks.withType(JavaCompile) {
+        options.encoding = 'UTF-8'
+        options.deprecation = false
+        options.compilerArgs << "-Xmaxerrs" << "9999"
+    }
+}
+
+///////////////////
+// Version Number
+version = version_major + "." + version_minor + "." + version_patch
+
+ext.pr = System.getenv('PR_NUMBER') ?: ""
+if (ext.pr) {
+    version = version + "+pr." + ext.pr
+}
+
+ext.branch = System.getenv('BRANCH') ?: ""
+if (ext.branch) {
+    version = version + "+branch." + ext.branch
+}
+
+ext.tag = System.getenv('TAG') ?: ""
+if (ext.tag) {
+    if (!ext.tag.startsWith("forge/v")) {
+        throw new GradleException("Tags for the forge version should start with forge/: ${ext.tag}")
+    }
+
+    version = ext.tag.substring("forge/v".length())
+    // Validate that the rest is a semver version
+    if (version ==~ /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/) {
+        if (System.getenv("GITHUB_ENV")) {
+            def envFile = new File(System.getenv("GITHUB_ENV"))
+            envFile.append("VERSION=${version}")
+        }
+    } else {
+        throw new GradleException("Invalid semver: $version")
+    }
+}
+
+ext.isAlpha = project.version.contains("alpha")
+ext.isBeta = project.version.contains("beta")
+
+sourceSets {
+    main {
+        resources {
+            srcDir 'src/generated/resources'
+        }
+    }
+    crowdin
+}
+
+test {
+    useJUnitPlatform()
+}
+
+dependencies {
+    crowdinImplementation 'de.siegmar:fastcsv:2.1.0'
+    crowdinImplementation 'com.google.code.gson:gson:2.8.9'
+}
+
+/**
+ * Configures properties common to all run configurations
+ */
+def commonRunProperties = {
+    workingDirectory project.file('run')
+    property 'forge.logging.console.level', 'debug'
+    property 'fml.earlyprogresswindow', 'false'
+    property 'appeng.tests', 'true'
+    jvmArgs "--add-opens", "java.base/sun.security.util=ALL-UNNAMED"
+    jvmArgs "--add-opens", "java.base/java.util.jar=ALL-UNNAMED"
+    // See https://github.com/Vazkii/Patchouli#mixin-troubleshooting
+    property 'mixin.env.remapRefMap', 'true'
+    property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+    // property "mixin.debug.export", "true"
+    mods {
+        appliedenergistics2 {
+            source sourceSets.main
+        }
+    }
+}
+
+////////////////////
+// Forge/Minecraft
+minecraft {
+    mappings channel: 'official', version: project.minecraft_version
+
+    accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
+
+    runs {
+        client {
+            with commonRunProperties
+            property "appeng.tests", "true"
+            property "guideDev.ae2guide.sources", file("guidebook").absolutePath
+        }
+        guide {
+            parent runs.client
+            with commonRunProperties
+            property "guideDev.ae2guide.sources", file("guidebook").absolutePath
+            property "guideDev.ae2guide.startupPage", "ae2:index.md"
+        }
+        server {
+            with commonRunProperties
+        }
+        data {
+            with commonRunProperties
+            // ForgeGradle will just force-exit the Gradle Daemon which fails our builds in case
+            // a daemon is used for any reason.
+            forceExit false
+            args '--mod', 'ae2', '--all', '--output', file('src/generated/resources/'), "--existing", file("src/main/resources")
+        }
+        // Use to run the tests
+        gametest {
+            parent server
+            with commonRunProperties
+            workingDirectory "build/gametest"
+        }
+    }
+}
+
+///////////
+// Mixins
+mixin {
+    add sourceSets.main, "ae2.mixins.refmap.json"
+}
+
+//////////////
+// Artifacts
+processResources {
+    exclude '.cache'
+
+    filesMatching("META-INF/mods.toml") {
+        expand 'minecraft_version': project.minecraft_version_range, 'forge_version': project.forge_version_range,
+                'jei_version': project.jei_version_range, 'top_version': project.top_version_range,
+                'jade_version': project.jade_version_range
+        filter { line ->
+            line.replace('version="0.0.0"', "version=\"$version\"")
+        }
+    }
+}
+
+jar.enabled = false // Replaced by "shadowJar"
+
+shadowJar {
+    finalizedBy 'reobfShadowJar'
+
+    from sourceSets.main.output.classesDirs
+    from sourceSets.main.output.resourcesDir
+
+    from('guidebook') {
+        into 'assets/ae2/ae2guide'
+    }
+
+    manifest {
+        attributes([
+                "Specification-Title"   : "Applied Energistics 2",
+                "Specification-Vendor"  : "TeamAppliedEnergistics",
+                "Specification-Version" : "${project.version}",
+                "Implementation-Title"  : "${project.name}",
+                "Implementation-Version": "${project.version}",
+                "Implementation-Vendor" : "TeamAppliedEnergistics",
+                "MixinConfigs"          : "ae2.mixins.json"
+        ])
+    }
+
+    relocate "io.methvin", "appeng.shaded.methvin"
+    relocate "org.yaml.snakeyaml", "appeng.shaded.snakeyaml"
+
+    configurations = [project.configurations.shaded]
+    archiveClassifier = null
+}
+
+reobf {
+    shadowJar {}
+}
+
+afterEvaluate {
+    tasks.reobfJar.enabled = false
+}
+
+tasks.assemble.dependsOn reobfShadowJar
+
+def publicApiIncludePatterns = {
+    exclude "**/*Internal.*"
+    exclude "**/*Internal\$*.*"
+    include "appeng/api/**"
+}
+
+javadoc {
+    source = sourceSets.main.allJava
+    classpath = sourceSets.main.compileClasspath + sourceSets.main.output
+
+    options.addStringOption('Xdoclint:none', '-quiet')
+    options.encoding = 'UTF-8'
+    options.charSet = 'UTF-8'
+}
+javadoc publicApiIncludePatterns
+
+task javadocJar(type: Jar, dependsOn: javadoc, group: "build") {
+    archiveClassifier = "javadoc"
+    from javadoc.destinationDir
+}
+
+task sourcesJar(type: Jar) {
+    archiveClassifier = "sources"
+    from sourceSets.main.allJava
+}
+
+task apiJar(type: Jar, group: "build") {
+    archiveClassifier = "api"
+    // api jar ist just a development aid and serves as both a binary and source jar simultaneously
+    from sourceSets.main.output
+    from sourceSets.main.allJava
+}
+apiJar publicApiIncludePatterns
+
+artifacts {
+    archives javadocJar
+    archives sourcesJar
+    archives apiJar
+}
+
+//////////////////
+// Maven publish
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = project.group
+            artifactId = project.archivesBaseName
+            version = project.version
+
+            // ForgeGradle will generate wild dependency definitions, see https://github.com/MinecraftForge/ForgeGradle/issues/584
+            // Since we don't actually depend on anything, just remove the entire node.
+            pom.withXml {
+                asNode().remove(asNode().dependencies)
+            }
+
+            from components.java
+            artifact shadowJar
+            artifact sourcesJar
+            artifact javadocJar
+            artifact apiJar
+        }
+    }
+    repositories {
+        maven {
+            credentials {
+                username System.getenv("GITHUB_ACTOR")
+                password System.getenv("GITHUB_TOKEN")
+            }
+            name = "GitHubPackages"
+            url = "https://maven.pkg.github.com/AppliedEnergistics/Applied-Energistics-2"
+        }
+        maven {
+            credentials {
+                username System.getenv("MODMAVEN_USER")
+                password System.getenv("MODMAVEN_PASSWORD")
+            }
+            name = "modmaven"
+            url = "https://modmaven.dev/artifactory/local-releases/"
+        }
+    }
+}
+
+/////////////
+// Spotless
+spotless {
+
+    java {
+        target 'src/*/java/appeng/**/*.java'
+
+        endWithNewline()
+        indentWithSpaces()
+        removeUnusedImports()
+        toggleOffOn()
+        eclipse().configFile 'codeformat/codeformat.xml'
+        importOrderFile 'codeformat/ae2.importorder'
+    }
+
+    format 'json', {
+        target 'src/*/resources/**/*.json'
+        targetExclude 'src/generated/resources/**'
+        prettier().config(['parser': 'json'])
+    }
+}
+
+////////////////
+// Crowdin
+task uploadToCrowdin(type: JavaExec) {
+    classpath = sourceSets.crowdin.runtimeClasspath
+    mainClass = 'Crowdin'
+    args 'upload_source'
+    workingDir "."
+}
+task uploadTranslations(type: JavaExec) {
+    classpath = sourceSets.crowdin.runtimeClasspath
+    mainClass = 'Crowdin'
+    args 'upload_translations'
+    workingDir "."
+}
+task downloadFromCrowdin(type: JavaExec) {
+    classpath = sourceSets.crowdin.runtimeClasspath
+    mainClass = 'Crowdin'
+    args 'update_translations'
+    workingDir "."
+}
+
+////////////////
+// Curse Forge
+if (System.getenv("CURSEFORGE") && !version.endsWith("-SNAPSHOT") && project.version != "0.0.0") {
+    def cfReleaseType = "release"
+    if (ext.isAlpha) {
+        cfReleaseType = "alpha"
+    } else if (ext.isBeta) {
+        cfReleaseType = "beta"
+    }
+
+    curseforge {
+        apiKey = System.getenv("CURSEFORGE")
+        project {
+            id = project.curseforge_project
+            changelogType = "markdown"
+            changelog = System.getenv("CHANGELOG") ?: "Please visit our [releases](https://github.com/AppliedEnergistics/Applied-Energistics-2/releases) for a changelog"
+            releaseType = cfReleaseType
+            addGameVersion project.minecraft_version
+            addGameVersion "Forge"
+            mainArtifact(jar.archiveFile) {
+                displayName = "AE2 ${project.version} [FORGE]"
+            }
+        }
+    }
+}
+
+////////////////
+// Modrinth
+
+if (System.getenv("MODRINTH") && !version.endsWith("-SNAPSHOT") && project.version != "0.0.0") {
+    def mrVersionType = "release"
+    if (ext.isAlpha) {
+        mrVersionType = "alpha"
+    } else if (ext.isBeta) {
+        mrVersionType = "beta"
+    }
+
+    modrinth {
+        token = System.getenv("MODRINTH")
+        changelog = System.getenv("CHANGELOG") ?: "Please visit our [releases](https://github.com/AppliedEnergistics/Applied-Energistics-2/releases) for a changelog"
+        projectId = 'XxWD5pD3'
+        versionName = project.version + " [FORGE]"
+        versionNumber = "forge-" + project.version
+        versionType = mrVersionType
+        uploadFile = jar
+        gameVersions = [ project.minecraft_version ]
+        loaders = [ "forge" ]
+    }
+}
+
+////////////////
+// IntelliJ Project Import
+// The Mixin annotation process does not have an obfuscation source when running through the IntelliJ compiler,
+// thus we have to prevent it from being activated as part of importing this Gradle project into IntelliJ.
+if (System.getProperty("idea.sync.active") == "true") {
+    afterEvaluate {
+        tasks.withType(JavaCompile).all {
+            it.options.annotationProcessorPath = files()
+        }
+    }
+}
+
+// See https://github.com/AppliedEnergistics/Applied-Energistics-2/issues/5259
+// Gradle module metadata contains mapped dependencies, making our artifacts unconsumable
+tasks.withType(GenerateModuleMetadata) {
+    enabled = false
+}
