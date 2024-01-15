@@ -56,7 +56,8 @@ import appeng.client.gui.style.WidgetStyle;
 import appeng.core.localization.GuiText;
 
 /**
- * A utility widget that consists of a text-field to enter a number with attached buttons to increment/decrement the
+ * A utility widget that consists of a text-field to enter a number with
+ * attached buttons to increment/decrement the
  * number in fixed intervals.
  */
 public class NumberEntryWidget extends GuiComponent implements ICompositeWidget {
@@ -135,8 +136,10 @@ public class NumberEntryWidget extends GuiComponent implements ICompositeWidget 
     }
 
     /**
-     * Sets the bounds of the text field on the screen. This may seem insane, but the text-field background is actually
-     * baked into the screens background image, which necessitates setting it precisely.
+     * Sets the bounds of the text field on the screen. This may seem insane, but
+     * the text-field background is actually
+     * baked into the screens background image, which necessitates setting it
+     * precisely.
      */
     public void setTextFieldBounds(Rect2i bounds) {
         this.textFieldBounds = bounds;
@@ -233,7 +236,8 @@ public class NumberEntryWidget extends GuiComponent implements ICompositeWidget 
     }
 
     /**
-     * Returns the integer value currently in the text-field, if it is a valid number and is within the allowed min/max
+     * Returns the integer value currently in the text-field, if it is a valid
+     * number and is within the allowed min/max
      * value.
      */
     public OptionalInt getIntValue() {
@@ -249,7 +253,8 @@ public class NumberEntryWidget extends GuiComponent implements ICompositeWidget 
     }
 
     /**
-     * Returns the long value currently in the text-field, if it is a valid number and is within the allowed min/max
+     * Returns the long value currently in the text-field, if it is a valid number
+     * and is within the allowed min/max
      * value.
      */
     public OptionalLong getLongValue() {
@@ -284,8 +289,7 @@ public class NumberEntryWidget extends GuiComponent implements ICompositeWidget 
             newValue = minimum;
         } else if (newValue.compareTo(maximum) > 0) {
             newValue = maximum;
-        } 
-        else if (currentValue.compareTo(BigDecimal.ONE) == 0 && delta > 0 && delta % 10 == 0) {
+        } else if (currentValue.compareTo(BigDecimal.ONE) == 0 && delta > 0 && delta % 10 == 0) {
             newValue = newValue.subtract(BigDecimal.ONE);
         }
         setValueInternal(newValue);
@@ -293,7 +297,6 @@ public class NumberEntryWidget extends GuiComponent implements ICompositeWidget 
 
     private void multiQty(long delta) {
         var currentValue = getValueInternal().orElse(BigDecimal.ZERO);
-        // System.out.println(currentValue);
         var newValue = currentValue.multiply(BigDecimal.valueOf(delta));
         var minimum = convertToInternalValue(this.minValue).setScale(0, RoundingMode.CEILING);
         var maximum = convertToInternalValue(this.maxValue).setScale(0, RoundingMode.FLOOR);
@@ -301,38 +304,47 @@ public class NumberEntryWidget extends GuiComponent implements ICompositeWidget 
             newValue = minimum;
         } else if (newValue.compareTo(maximum) > 0) {
             newValue = maximum;
-        } 
-        // else if (currentValue.compareTo(BigDecimal.ONE) == 0 && delta > 0 && delta % 10 == 0) {
-        //     newValue = newValue.subtract(BigDecimal.ONE);
+        }
+        // else if (currentValue.compareTo(BigDecimal.ONE) == 0 && delta > 0 && delta %
+        // 10 == 0) {
+        // newValue = newValue.subtract(BigDecimal.ONE);
         // }
         setValueInternal(newValue);
     }
 
     private void dividQty(long delta) {
         var currentValue = getValueInternal().orElse(BigDecimal.ZERO);
-        var newValue = currentValue.divide(BigDecimal.valueOf(delta), 3,RoundingMode.CEILING);
+        System.out.println("\ncurrentValue: " + currentValue);
+        var newValue = currentValue.divide(BigDecimal.valueOf(delta), 3, RoundingMode.CEILING);
+        System.out.println("newValue: " + currentValue);
         var minimum = convertToInternalValue(this.minValue).setScale(0, RoundingMode.CEILING);
         var maximum = convertToInternalValue(this.maxValue).setScale(0, RoundingMode.FLOOR);
+        System.out.println("minimum: " + minimum);
+        System.out.println("maximum: " + maximum);
         if (newValue.compareTo(minimum) < 0) {
             newValue = minimum;
         } else if (newValue.compareTo(maximum) > 0) {
             newValue = maximum;
-        } 
-        // else if (currentValue.compareTo(BigDecimal.ONE) == 0 && delta > 0 && delta % 10 == 0) {
-        //     newValue = newValue.subtract(BigDecimal.ONE);
+        }
+        // else if (currentValue.compareTo(BigDecimal.ONE) == 0 && delta > 0 && delta %
+        // 10 == 0) {
+        // newValue = newValue.subtract(BigDecimal.ONE);
         // }
+        System.out.println("newValue: " + currentValue);
         setValueInternal(newValue);
     }
 
     /**
-     * Retrieves the numeric representation of the value entered by the user, if it is convertible.
+     * Retrieves the numeric representation of the value entered by the user, if it
+     * is convertible.
      */
     private Optional<BigDecimal> getValueInternal() {
         return MathExpressionParser.parse(textField.getValue(), decimalFormat);
     }
 
     /*
-     * Return true if the value entered by the user is a single numeric number and not a mathematical expression
+     * Return true if the value entered by the user is a single numeric number and
+     * not a mathematical expression
      */
     private boolean isNumber() {
         var position = new ParsePosition(0);
